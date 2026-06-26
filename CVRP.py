@@ -212,14 +212,20 @@ class CVRP:
 
         # Sets up default configuration
         search_parameters = pywrapcp.DefaultRoutingSearchParameters()
+
         # Sets first solution strategy which is the heuristic used by solver
         # to choose order of node traversal.
-        # PARALLEL_CHEAPEST_INSERTION produced lower cost than
-        # PATH_CHEAPEST_ARC (greedy).
         search_parameters.first_solution_strategy = (
             routing_enums_pb2.FirstSolutionStrategy
             .PARALLEL_CHEAPEST_INSERTION
         )
+
+        # Sets local search metaheuristic to tell the solver how
+        # to improve the solution. GLS penalises costly routes.
+        search_parameters.local_search_metaheuristic = (
+            routing_enums_pb2.LocalSearchMetaheuristic.GUIDED_LOCAL_SEARCH
+        )
+
         # Sets time limit for solve to find solution; if no solution can be
         # found, solver will return None.
         search_parameters.time_limit.FromSeconds(10)

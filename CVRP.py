@@ -15,11 +15,11 @@ But demand per stop point can't be solved with only 3 vans at 67 cap.
 
 class CVRP:
     def __init__(self, coordinates, parcel_demands, vehicles = 4,
-                 fuel_cost_gbr = 20, shift_cost_gbr = 100):
+                 fuel_cost_gbr_per_m = 0.000055, shift_cost_gbr = 97.44):
         self._parcel_demands = parcel_demands
         self._depot = 0 # The depot MUST be the first point in the coordinates list
         self._vehicles = vehicles
-        self._fuel_cost = fuel_cost_gbr
+        self._fuel_cost = fuel_cost_gbr_per_m
         self._shift_cost = shift_cost_gbr
         self._coordinates = coordinates
         self._solution = None
@@ -54,7 +54,7 @@ class CVRP:
         binding_capacity = floor(min(maximum_parcels_by_weight,
                            maximum_parcels_by_volume))
         # Ensures binding capacity is at least 1 to avoid zero capacity.
-        return int(max(1, binding_capacity))
+        return max(1, binding_capacity)
 
     @staticmethod
     def get_distance_matrix(coordinates):
@@ -94,12 +94,13 @@ class CVRP:
             print(i)
 
         shift_cost = vehicles_used * self._shift_cost
-        total_cost = self.__format_int(total_fuel_cost + shift_cost)
+        total_cost = total_fuel_cost + shift_cost
 
         # Print overall solution summary
-        print(f"Total distance travelled: {total_distance}m")
+        print(f"Total distance travelled: "
+              f"{self.__format_int(total_distance)}m")
         print(f"Vehicles used: {vehicles_used}")
-        print(f"Total shift cost: {shift_cost}")
+        print(f"Total shift cost: £{shift_cost}")
         print(f"Total load of all vehicles: {total_load}")
         print(f"Combined objective (fuel + shift cost): "
               f"{self.__format_int(self._solution.ObjectiveValue() + shift_cost)}")
@@ -203,7 +204,7 @@ class CVRP:
         )
         # Sets a fixed cost for using each vehicle, which may encourage the
         # solver to use fewer vehicles if possible.
-        self._routing.SetFixedCostOfAllVehicles(self._shift_cost)
+        self._routing.SetFixedCostOfAllVehicles(round(self._shift_cost))
 
     @staticmethod
     def __configure_search_params():
@@ -283,10 +284,12 @@ class CVRP:
                 route_plan += f"P{current_node}: {accumulated_load} parcels --"
 
             # Add distance in m to next stop point to route plan
-            route_plan += f"{self._distance_matrix[current_node][next_node]}m--> "
+            distance_to_next = self._distance_matrix[current_node][next_node]
+            route_plan += f"{self.__format_int(distance_to_next)}m--> "
 
         route_plan += "Depot\n"
-        route_plan += f"Distance of route: {route.distance}m\n"
+        route_plan += (f"Distance of route: "
+                       f"{self.__format_int(route.distance)}m\n")
         route_plan += f"Fuel cost of route: {route.fuel_cost}\n"
         route_plan += f"Parcel load of route: {route.load}\n"
         return route_plan
@@ -351,7 +354,7 @@ class CVRP:
 
         distance = self.__distance_callback(from_index, to_index)
         fuel_cost_per_metre = self._fuel_cost  # £ per metre
-        return int(distance * fuel_cost_per_metre)
+        return round(distance * fuel_cost_per_metre)
 
 
 if __name__ == "__main__":

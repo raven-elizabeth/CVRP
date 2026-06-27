@@ -4,6 +4,7 @@ from scipy.spatial.distance import cdist
 from math import floor
 import matplotlib.pyplot as plt
 from random import random
+from time import time
 
 """
 NOTE:
@@ -75,9 +76,12 @@ class CVRP:
 
         self.__configure_callbacks(capacities)
         search_params = self.__configure_search_params()
+        start_time = time()
         self._solution = self._routing.SolveWithParameters(search_params)
+        end_time = time()
         if self._solution:
             self.print_solution()
+            print(f"Time taken to compute solution: {end_time - start_time}")
         else:
             print("No solution found!")
 
@@ -386,5 +390,6 @@ if __name__ == "__main__":
     }
 
     cvrp = CVRP(stop_point_coordinates, parcel_demand_per_stop_point)
+
     cvrp.solve(capacity_constraints)
     cvrp.show_route_visualisations()

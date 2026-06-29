@@ -20,7 +20,8 @@ class CVRP:
         self._parcel_demands = parcel_demands
         self._depot = 0 # The depot MUST be the first point in the coordinates list
         self._vehicles = vehicles
-        self._fuel_cost = fuel_cost_gbr_per_m
+        self._fuel_scale = 1000000  # Scale fuel cost to avoid floating point issues in OR-Tools
+        self._fuel_cost = fuel_cost_gbr_per_m * self._fuel_scale  # £ per metre scaled to avoid floating point issues
         self._shift_cost = shift_cost_gbr
         self._coordinates = coordinates
         self._solution = None
@@ -98,7 +99,7 @@ class CVRP:
             print(i)
 
         shift_cost = vehicles_used * self._shift_cost
-        total_cost = total_fuel_cost + shift_cost
+        total_cost = total_fuel_cost / self._fuel_scale + shift_cost
 
         # Print overall solution summary
         print(f"Total distance travelled: "
@@ -107,7 +108,7 @@ class CVRP:
         print(f"Total shift cost: £{shift_cost}")
         print(f"Total load of all vehicles: {total_load}")
         print(f"Combined objective (fuel + shift cost): "
-              f"{self.__format_int(self._solution.ObjectiveValue() + shift_cost)}")
+              f"{self.__format_int(self._solution.ObjectiveValue() / self._fuel_scale + shift_cost)}")
         print(f"Total operational cost: £{total_cost}")
 
     def show_route_visualisations(self):
@@ -300,7 +301,7 @@ class CVRP:
         route_plan += "Depot\n"
         route_plan += (f"Distance of route: "
                        f"{self.__format_int(route.distance)}m\n")
-        route_plan += f"Fuel cost of route: {route.fuel_cost}\n"
+        route_plan += f"Fuel cost of route: £{route.fuel_cost / self._fuel_scale:.2f}\n"
         route_plan += f"Parcel load of route: {route.load}\n"
         return route_plan
 
